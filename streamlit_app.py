@@ -7,7 +7,8 @@ st.set_page_config(
     layout="centered"
 )
 
-API_BASE_URL= "http://127.0.0.1:8000/api/v1"
+# API_BASE_URL= "http://127.0.0.1:8000/api/v1"
+API_BASE_URL = "https://genai-doc-assistant-eerm.onrender.com/api/v1"
 st.title("📄 GenAI Document Intelligence Assistant")
 st.caption("Multi-agent RAG system powered by LangGraph + FastAPI + Groq")
 
