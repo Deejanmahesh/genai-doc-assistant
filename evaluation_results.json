@@ -1,0 +1,24 @@
+{
+  "per_question": [
+    {
+      "question": "How many days of annual leave am I entitled to?",
+      "answer": "You are entitled to 18 days of paid annual leave per calendar year.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0
+    },
+    {
+      "question": "How many days of sick leave are given per year?",
+      "answer": "12 days of paid sick leave are given per year.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0
+    },
+    {
+      "question": "How many days per week can I work from home?",
+      "answer": "You can work from home up to 2 days per week with manager approval.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0
+    }
+  ],
+  "avg_faithfulness": 1.0,
+  "avg_answer_relevancy": 1.0
+}
