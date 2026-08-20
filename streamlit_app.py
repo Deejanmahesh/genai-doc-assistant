@@ -7,17 +7,28 @@ st.set_page_config(
     layout="centered"
 )
 
-# API_BASE_URL= "http://127.0.0.1:8000/api/v1"
 API_BASE_URL = "https://genai-doc-assistant-eerm.onrender.com/api/v1"
+
 st.title("📄 GenAI Document Intelligence Assistant")
 st.caption("Multi-agent RAG system powered by LangGraph + FastAPI + Groq")
 
+# ---------- Helper: detect out-of-scope answers ----------
+OUT_OF_SCOPE_PHRASES = [
+    "don't have enough information",
+    "isn't covered in the uploaded document",
+]
+
+def is_out_of_scope(answer: str) -> bool:
+    return any(phrase in answer.lower() for phrase in OUT_OF_SCOPE_PHRASES)
+
+# ---------- Session state ----------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "doc_indexed" not in st.session_state:
     st.session_state.doc_indexed = False
 
+# ---------- Sidebar: Upload ----------
 with st.sidebar:
     st.header("📁 Upload Document")
     uploaded_file = st.file_uploader(
@@ -49,12 +60,17 @@ with st.sidebar:
     1. Upload a document
     2. Ask questions about it
     3. AI routes → retrieves → generates → validates the answer
+
+    💡 Ask only questions related to your uploaded document — the assistant will let you know if something is out of scope.
     """)
 
 # ---------- Chat interface ----------
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+        if msg["role"] == "assistant" and msg.get("out_of_scope"):
+            st.warning(f"⚠️ {msg['content']}")
+        else:
+            st.write(msg["content"])
         if msg["role"] == "assistant" and "meta" in msg:
             meta = msg["meta"]
             st.caption(
@@ -81,7 +97,13 @@ if query := st.chat_input("Ask a question about your document..."):
                     if response.status_code == 200:
                         data = response.json()
                         answer = data["answer"]
-                        st.write(answer)
+                        out_of_scope = is_out_of_scope(answer)
+
+                        if out_of_scope:
+                            st.warning(f"⚠️ {answer}")
+                        else:
+                            st.write(answer)
+
                         st.caption(
                             f"Query type: `{data['query_type']}` | "
                             f"Valid: {'✅' if data['is_valid'] else '⚠️'} | "
@@ -90,10 +112,10 @@ if query := st.chat_input("Ask a question about your document..."):
                         st.session_state.messages.append({
                             "role": "assistant",
                             "content": answer,
-                            "meta": data
+                            "meta": data,
+                            "out_of_scope": out_of_scope
                         })
                     else:
                         st.error(f"Error: {response.text}")
                 except requests.exceptions.ConnectionError:
                     st.error("Cannot connect to backend. Is FastAPI running on port 8000?")
-
