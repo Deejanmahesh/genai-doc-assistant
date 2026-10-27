@@ -4,4 +4,7 @@ __pycache__/
 *.pyc
 .env
 .idea/
-.vscode/
+.vscode/test_venv/
+venv/
+chroma_db/
+.env
