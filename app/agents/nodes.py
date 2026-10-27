@@ -42,15 +42,21 @@ def retriever_node(state: GraphState) -> GraphState:
     return {**state, "retrieved_docs": retrieved_texts}
 
 
-generator_prompt = ChatPromptTemplate.from_template("""You are a helpful assistant answering questions based only on the given context.
-If the context doesn't contain the answer, say "I don't have enough information to answer that."
+generator_prompt = ChatPromptTemplate.from_template("""
+You are a helpful assistant that answers questions using ONLY the provided document context.
 
 Context:
 {context}
 
 Question: {query}
 
-Answer:""")
+Instructions:
+- If the context contains the answer, answer it clearly and concisely.
+- If the context does NOT contain relevant information to answer the question, respond with exactly:
+"This question isn't covered in the uploaded document. Please ask something related to the document, or upload a different document that covers this topic."
+
+Answer:
+""")
 
 def generator_node(state: GraphState) -> GraphState:
     context = "\n\n".join(state.get("retrieved_docs", []))

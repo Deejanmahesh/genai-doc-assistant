@@ -1,10 +1,10 @@
 venv/
 .venv/
+test_venv/
 __pycache__/
 *.pyc
 .env
 .idea/
-.vscode/test_venv/
-venv/
+.vscode/
 chroma_db/
-.env
+chroma_db_backup/

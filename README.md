@@ -194,3 +194,7 @@ python test_evaluation.py
 
 **Deejan Mahesh**
 [LinkedIn](#) · [GitHub](https://github.com/Deejanmahesh)
+
+## 🚀 Live Demo
+- **Frontend (Streamlit):** https://genai-doc-assistant-rydvsmpntccheefcvnhtg8.streamlit.app
+- **Backend API docs:** https://genai-doc-assistant-eerm.onrender.com/docs
