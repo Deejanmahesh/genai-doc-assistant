@@ -2,6 +2,7 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from app.agents.state import GraphState
 import os
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,6 +19,20 @@ def set_retriever(retriever):
     global hybrid_retriever
     hybrid_retriever = retriever
 
+GREETING_RE = re.compile(
+    r"^\s*(hi+|hello+|hey+|hai|vanakkam|good\s+(morning|afternoon|evening))"
+    r"(\s+(there|bot|assistant))?\W*$",
+    re.IGNORECASE,
+)
+
+GREETING_REPLY = (
+    "Hello! 👋 I'm your document assistant. "
+    "Ask me anything about the document you've uploaded."
+)
+
+def is_greeting(state: GraphState) -> bool:
+    return state.get("query_type") == "greeting"
+
 
 router_prompt = ChatPromptTemplate.from_template("""Classify the following query into exactly one word: factual, analytical, or summarization.
 Return ONLY the single word, nothing else.
@@ -25,6 +40,9 @@ Return ONLY the single word, nothing else.
 Query: {query}""")
 
 def router_node(state: GraphState) -> GraphState:
+    if GREETING_RE.match(state["query"]):
+        return {**state, "query_type": "greeting"}
+
     chain = router_prompt | llm
     result = chain.invoke({"query": state["query"]})
     query_type = result.content.strip().lower()
@@ -35,6 +53,9 @@ def router_node(state: GraphState) -> GraphState:
 
 
 def retriever_node(state: GraphState) -> GraphState:
+    if is_greeting(state):
+        return {**state, "retrieved_docs": []}
+
     if hybrid_retriever is None:
         raise ValueError("Retriever not set. Call set_retriever() first.")
     docs = hybrid_retriever.invoke(state["query"])
@@ -59,6 +80,13 @@ Answer:
 """)
 
 def generator_node(state: GraphState) -> GraphState:
+    if is_greeting(state):
+        return {
+            **state,
+            "draft_answer": GREETING_REPLY,
+            "retry_count": state.get("retry_count", 0),
+        }
+
     context = "\n\n".join(state.get("retrieved_docs", []))
     chain = generator_prompt | llm
     result = chain.invoke({"context": context, "query": state["query"]})
@@ -79,6 +107,15 @@ Answer:
 Verdict:""")
 
 def validator_node(state: GraphState) -> GraphState:
+    if is_greeting(state):
+        return {
+            **state,
+            "final_answer": state["draft_answer"],
+            "is_valid": True,
+            "confidence_score": 1.0,
+            "retry_count": state.get("retry_count", 0) + 1,
+        }
+
     context = "\n\n".join(state.get("retrieved_docs", []))
     chain = validator_prompt | llm
     result = chain.invoke({"context": context, "answer": state["draft_answer"]})
